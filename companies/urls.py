@@ -1,5 +1,8 @@
 from django.urls import path
 
-# Routes for the companies app (register, login) will be added here.
+from .views import RegisterView
+
+# Routes for the companies app (register, login).
 urlpatterns = [
+    path("auth/register/", RegisterView.as_view(), name="register"),
 ]
