@@ -1,8 +1,11 @@
+from django.db import transaction
 from django.db.models import Q
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+from query_logs.models import QueryLog
 
 from .models import KBEntry
 from .serializers import KBQuerySerializer, KBEntrySerializer
@@ -18,13 +21,20 @@ class KBQueryView(APIView):
         # 2. IDENTITY
         company = request.user.company
 
-        # 3. SEARCH — match the term in question OR answer (case-insensitive)
-        results = KBEntry.objects.filter(
-            Q(question__icontains=search_term) | Q(answer__icontains=search_term)
-        )
-        count = results.count()
+        # 3 & 4. SEARCH + LOGGING
+        with transaction.atomic():
+            # match the term in question OR answer (case-insensitive)
+            results = KBEntry.objects.filter(
+                Q(question__icontains=search_term) | Q(answer__icontains=search_term)
+            )
+            count = results.count()
 
-        # TODO: 4. LOGGING
+            # log the search
+            QueryLog.objects.create(
+                company=company,
+                search_term=search_term,
+                results_count=count,
+            )
 
         # 5. RESPONSE
         results_data = KBEntrySerializer(results, many=True).data
