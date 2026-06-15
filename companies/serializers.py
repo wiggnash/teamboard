@@ -14,3 +14,7 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError("This username is already taken! Please try again.")
         
         return value
+    
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
